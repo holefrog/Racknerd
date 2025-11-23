@@ -1,0 +1,12 @@
+@@V2RAY_LOGS@@ {
+    daily
+    rotate 7
+    compress
+    delaycompress
+    missingok
+    notifempty
+    create 0640 @@SERVICE_USER@@ @@SERVICE_GROUP@@
+    postrotate
+        systemctl reload v2ray > /dev/null 2>&1 || true
+    endscript
+}

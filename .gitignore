@@ -1,0 +1,132 @@
+# ============================================
+# RPI MediaPlayer - Git Ignore 配置
+# ============================================
+
+# ============================================
+# 🔒 安全敏感文件（绝对不能提交）
+# ============================================
+# SSH 密钥（私钥和公钥）
+rpi_keys/*
+*.pem
+*.key
+
+# 密码和凭证
+*.password
+*.secret
+*.credential
+
+# 备份的敏感文件
+*.bak
+*~
+
+# config
+config.ini
+
+
+# ============================================
+# 日志文件
+# ============================================
+*.log
+logs/
+/tmp/
+
+# ============================================
+# Python
+# ============================================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+venv/
+.venv/
+ENV/
+env/
+
+# ============================================
+# 编辑器和 IDE
+# ============================================
+
+# VSCode
+.vscode/
+*.code-workspace
+
+# JetBrains (PyCharm, IntelliJ, etc.)
+.idea/
+*.iml
+*.iws
+
+# Vim
+*.swp
+*.swo
+*~
+.*.sw?
+
+# Emacs
+*~
+\#*\#
+.\#*
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# ============================================
+# 操作系统
+# ============================================
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Linux
+.directory
+
+# ============================================
+# 临时文件
+# ============================================
+*.tmp
+*.temp
+.cache/
+
+# ============================================
+# 自定义配置（可选）
+# ============================================
+
+# 如果你有本地测试配置，可以忽略
+config.local.ini
+test_config.ini
+
+# 本地开发脚本
+local_*.sh
+test_*.sh
+project-structure-doc.md
+
+
+# 重新允许 Git 进入 lib 文件夹
+!lib/
+!lib/constants.sh
+!lib/local_utils.sh

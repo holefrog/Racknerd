@@ -1,0 +1,13 @@
+{
+  "v": "2",
+  "ps": "magicduck",
+  "add": "@@DOMAIN@@",
+  "port": "@@V2RAY_PORT@@",
+  "id": "@@V2RAY_UUID@@",
+  "aid": "0",
+  "net": "ws",
+  "type": "none",
+  "host": "",
+  "path": "/@@V2RAY_URL@@",
+  "tls": "tls"
+}

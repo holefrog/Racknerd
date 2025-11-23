@@ -1,0 +1,77 @@
+# ============================================
+# Fail2ban 本地配置（自动生成）
+# ============================================
+
+[DEFAULT]
+# 封禁时间（秒）
+bantime = 3600
+
+# 检测时间窗口（秒）
+findtime = 600
+
+# 最大重试次数
+maxretry = 5
+
+# 封禁动作
+banaction = firewallcmd-ipset
+banaction_allports = firewallcmd-ipset
+
+# 邮件通知（可选，需配置邮件服务器）
+# destemail = @@EMAIL@@
+# sendername = Fail2Ban
+# action = %(action_mwl)s
+
+# ============================================
+# SSH 保护
+# ============================================
+[sshd]
+enabled = true
+port = @@SSH_PORT@@
+logpath = @@FAIL2BAN_LOG_SSH@@
+maxretry = 3
+bantime = 7200
+
+# ============================================
+# Nginx 保护
+# ============================================
+[nginx-http-auth]
+enabled = true
+port = http,https
+logpath = @@NGINX_LOG_ERROR@@
+
+[nginx-noscript]
+enabled = true
+port = http,https
+logpath = @@NGINX_LOG_ACCESS@@
+
+[nginx-badbots]
+enabled = true
+port = http,https
+logpath = @@NGINX_LOG_ACCESS@@
+
+[nginx-noproxy]
+enabled = true
+port = http,https
+logpath = @@NGINX_LOG_ACCESS@@
+
+# ============================================
+# 限制扫描攻击
+# ============================================
+[nginx-limit-req]
+enabled = true
+port = http,https
+logpath = @@NGINX_LOG_ERROR@@
+
+# ============================================
+# 【FIX 9: V2Ray/VMess/VLESS 保护】
+# ============================================
+[v2ray]
+enabled = true
+# 端口使用配置中的 V2Ray 端口
+port = @@V2RAY_PORT@@
+# 引用自定义 filter
+filter = v2ray
+# 日志路径使用 /var/log/v2ray/error.log (已在 modules/05-v2ray.sh 中修正)
+logpath = @@V2RAY_LOG_ERROR@@
+maxretry = 5
+bantime = 3600
