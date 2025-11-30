@@ -1,0 +1,29 @@
+[Unit]
+Description=V2Ray Service
+Documentation=https://www.v2fly.org/
+After=network.target nss-lookup.target
+
+[Service]
+# [安全修复] 将 root 修改为 nginx
+User=nginx
+# 为了保险起见，建议同时指定 Group
+Group=nginx
+
+# 这些能力设置允许非 root 用户进行必要的网络操作
+CapabilityBoundingSet=CAP_NET_BIND_SERVICE CAP_NET_ADMIN
+AmbientCapabilities=CAP_NET_BIND_SERVICE CAP_NET_ADMIN
+NoNewPrivileges=true
+
+# 【修复 8】沙盒化设置 (增强安全性)
+ProtectSystem=full
+ProtectHome=true
+PrivateTmp=true
+ProtectKernelTunables=true
+ProtectControlGroups=true
+
+ExecStart=@@V2RAY_PATH@@/v2ray run -config @@V2RAY_PATH@@/@@V2RAY_CONFIG@@
+Restart=on-failure
+RestartSec=5s
+
+[Install]
+WantedBy=multi-user.target
