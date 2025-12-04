@@ -1,0 +1,279 @@
+<!-- 
+============================================
+WebDAV 浏览器增强脚本
+功能：为 Nginx autoindex 添加删除按钮
+版本：1.0 (修复版)
+============================================
+-->
+<style>
+  /* 删除按钮样式 */
+  .webdav-delete-btn {
+    cursor: pointer;
+    color: #dc3545;
+    font-size: 0.9em;
+    margin-left: 10px;
+    text-decoration: none;
+    padding: 2px 6px;
+    border: 1px solid #dc3545;
+    border-radius: 3px;
+    transition: all 0.2s;
+  }
+  
+  .webdav-delete-btn:hover {
+    background-color: #dc3545;
+    color: white;
+    text-decoration: none;
+  }
+  
+  /* 文件/目录图标优化 */
+  a[href$="/"]::before {
+    content: "📁 ";
+  }
+  
+  a:not([href$="/"])::before {
+    content: "📄 ";
+  }
+  
+  a[href="../"]::before,
+  a[href=".."]::before {
+    content: "⬆️ ";
+  }
+  
+  /* 响应式布局 */
+  @media (max-width: 768px) {
+    .webdav-delete-btn {
+      font-size: 0.8em;
+      padding: 1px 4px;
+      margin-left: 5px;
+    }
+  }
+  
+  /* 删除确认对话框样式（可选） */
+  .webdav-confirm-dialog {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    z-index: 10000;
+    display: none;
+  }
+  
+  .webdav-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 9999;
+    display: none;
+  }
+</style>
+
+<script>
+(function() {
+  'use strict';
+  
+  // 配置
+  const CONFIG = {
+    deleteButtonText: '[删除]',
+    confirmMessage: '确认删除',
+    successMessage: '删除成功！',
+    errorMessage: '删除失败',
+    retryOn409: true,  // 遇到 409 时尝试不带尾部斜杠重试
+    debug: false       // 调试模式
+  };
+  
+  // 日志函数
+  function log(...args) {
+    if (CONFIG.debug) {
+      console.log('[WebDAV]', ...args);
+    }
+  }
+  
+  // 删除函数
+  function deleteItem(url, isDirectory, itemName) {
+    log('Attempting to delete:', url);
+    
+    return fetch(url, {
+      method: 'DELETE',
+      credentials: 'same-origin',  // 包含认证 cookie
+      headers: {
+        'Accept': '*/*',
+        'Cache-Control': 'no-cache'
+      }
+    })
+    .then(response => {
+      log('Delete response:', response.status, response.statusText);
+      
+      // 成功状态码：204 No Content, 200 OK, 404 Not Found (已经不存在)
+      if (response.ok || response.status === 204 || response.status === 404) {
+        return { success: true, status: response.status };
+      }
+      
+      // 409 Conflict - 尝试不带尾部斜杠重试
+      if (response.status === 409 && CONFIG.retryOn409 && url.endsWith('/')) {
+        log('Got 409, retrying without trailing slash...');
+        const retryUrl = url.slice(0, -1);  // 移除尾部斜杠
+        
+        return fetch(retryUrl, {
+          method: 'DELETE',
+          credentials: 'same-origin',
+          headers: {
+            'Accept': '*/*',
+            'Cache-Control': 'no-cache'
+          }
+        })
+        .then(retryResponse => {
+          log('Retry response:', retryResponse.status);
+          
+          if (retryResponse.ok || retryResponse.status === 204 || retryResponse.status === 404) {
+            return { success: true, status: retryResponse.status };
+          } else {
+            return { 
+              success: false, 
+              status: retryResponse.status,
+              error: `HTTP ${retryResponse.status}`
+            };
+          }
+        });
+      }
+      
+      // 其他错误
+      return { 
+        success: false, 
+        status: response.status,
+        error: `HTTP ${response.status} ${response.statusText}`
+      };
+    })
+    .catch(error => {
+      log('Delete error:', error);
+      return { 
+        success: false, 
+        error: error.message || '网络错误'
+      };
+    });
+  }
+  
+  // 初始化删除按钮
+  function initDeleteButtons() {
+    log('Initializing delete buttons...');
+    
+    // 获取所有链接
+    const links = document.querySelectorAll('a');
+    let buttonCount = 0;
+    
+    links.forEach(link => {
+      const href = link.getAttribute('href');
+      
+      // 跳过无效链接和父目录链接
+      if (!href || href === '../' || href === '..' || href === '/') {
+        return;
+      }
+      
+      // 判断是否为目录（以 / 结尾）
+      const isDirectory = href.endsWith('/');
+      
+      // 获取显示名称
+      const itemName = link.textContent.trim() || decodeURIComponent(href);
+      
+      // 创建删除按钮
+      const deleteBtn = document.createElement('a');
+      deleteBtn.className = 'webdav-delete-btn';
+      deleteBtn.textContent = CONFIG.deleteButtonText;
+      deleteBtn.href = '#';
+      deleteBtn.title = `删除 ${isDirectory ? '目录' : '文件'}: ${itemName}`;
+      
+      // 删除按钮点击事件
+      deleteBtn.onclick = function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        // 确认删除
+        const confirmMsg = `${CONFIG.confirmMessage} ${isDirectory ? '目录' : '文件'}:\n\n${itemName}\n\n${isDirectory ? '⚠️ 注意：目录必须为空才能删除' : ''}`;
+        
+        if (!confirm(confirmMsg)) {
+          return;
+        }
+        
+        // 禁用按钮，防止重复点击
+        deleteBtn.style.pointerEvents = 'none';
+        deleteBtn.style.opacity = '0.5';
+        deleteBtn.textContent = '[删除中...]';
+        
+        // 构建完整的删除 URL
+        const currentPath = window.location.pathname;
+        let deleteUrl = currentPath;
+        
+        // 确保路径以 / 结尾
+        if (!deleteUrl.endsWith('/')) {
+          deleteUrl += '/';
+        }
+        
+        // 添加要删除的项目
+        deleteUrl += href;
+        
+        // 关键：确保目录 URL 以 / 结尾
+        if (isDirectory && !deleteUrl.endsWith('/')) {
+          deleteUrl += '/';
+        }
+        
+        // 执行删除
+        deleteItem(deleteUrl, isDirectory, itemName)
+          .then(result => {
+            if (result.success) {
+              alert(`${CONFIG.successMessage}\n${itemName}`);
+              // 刷新页面
+              window.location.reload();
+            } else {
+              alert(`${CONFIG.errorMessage}:\n${itemName}\n\n错误: ${result.error}`);
+              // 恢复按钮
+              deleteBtn.style.pointerEvents = '';
+              deleteBtn.style.opacity = '';
+              deleteBtn.textContent = CONFIG.deleteButtonText;
+            }
+          });
+      };
+      
+      // 在链接后插入删除按钮
+      link.parentNode.insertBefore(deleteBtn, link.nextSibling);
+      buttonCount++;
+    });
+    
+    log(`Added ${buttonCount} delete buttons`);
+  }
+  
+  // 页面加载完成后初始化
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initDeleteButtons);
+  } else {
+    // DOM 已经加载完成
+    initDeleteButtons();
+  }
+  
+  log('WebDAV delete script loaded');
+})();
+</script>
+
+<!-- 
+使用说明：
+1. 此文件通过 Nginx add_after_body 指令自动注入到 autoindex 页面
+2. 会在每个文件/目录链接后添加 [删除] 按钮
+3. 点击删除按钮会弹出确认对话框
+4. 删除成功后自动刷新页面
+5. 目录必须为空才能删除（Nginx 基础 DAV 模块限制）
+
+配置示例（Nginx）：
+location /webdav/ {
+    alias /var/ftp/files/;
+    autoindex on;
+    autoindex_format html;
+    add_after_body /webdav_footer.html;  # 注入此脚本
+    dav_methods PUT DELETE MKCOL COPY MOVE;
+    ...
+}
+-->

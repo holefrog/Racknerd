@@ -1,0 +1,92 @@
+# ============================================
+# RackNerd VPS 自动部署配置文件（示例）
+# ============================================
+# 
+# 使用说明：
+# 1. 复制此文件：cp config.ini.example config.ini
+# 2. 修改下面的配置项（尤其是带有 YOUR_ 和 CHANGE_ 的值）
+# 3. 运行部署：./setup.sh
+#
+# 安全提示：
+# - 使用强密码（建议 16+ 字符）
+# - 使用随机 Token（建议 32+ 字符）
+# - 不要将 config.ini 提交到版本控制
+# ============================================
+
+[ssh]
+# VPS 连接信息
+host=YOUR_VPS_IP                 # 必填：VPS 的 IP 地址
+user=root                        # SSH 用户名（通常为 root）
+port=22                          # 原始 SSH 端口（通常为 22）
+# 【重要】如果您使用密钥登录，请删除 password= 这一行
+password=CHANGE_THIS_IF_USING_PASSWORD
+key=./rpi_keys/id_rsa            # SSH 私钥路径
+
+[system]
+# 系统优化配置
+enable_bbr=yes                   # 启用 TCP BBR 拥塞控制（yes/no）
+
+[ports]
+# 服务端口配置
+# 【重要】强烈建议修改 ssh_new 端口以增强安全性
+ssh_new=9929                     # 新的 SSH 端口（建议 10000-65535）
+aria2=52518                      # Aria2 RPC 端口（内部使用，外部通过 Nginx 访问）
+v2ray=53518                      # V2Ray 端口
+
+[ftp]
+# SFTP 用户配置
+user=ftpuser                     # SFTP 用户名
+# 【重要】使用强密码！生成方法：openssl rand -base64 24
+password=CHANGE_THIS_STRONG_PASSWORD_MIN_16_CHARS
+path=/var/ftp/files              # SFTP 和 Aria2 共享的数据目录
+
+[nginx]
+# 域名和 SSL 配置
+# 【重要】域名必须已解析到 VPS IP
+domain=example.com               # 必填：你的域名
+email=admin@example.com          # 必填：用于 SSL 证书申请的邮箱
+use_upstream=yes
+
+[aria2]
+# Aria2 下载器配置
+# 【重要】使用强 Token！生成方法：cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1
+token=YOUR_SECRET_TOKEN_HERE_MIN_32_CHARS
+
+[v2ray]
+# V2Ray 代理配置
+uuid=                            # 留空自动生成 UUID
+version=v5.40.0                  # 可选：V2Ray Core 版本 (留空使用默认稳定版)
+# 随机路径生成方法：cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 16 | head -n 1
+path_url=ws_random_path_12345_MIN_16_CHARS
+
+[ddns]
+# ChangeIP DDNS 配置（可选，不使用可将 hostname 留空）
+# 注册地址：https://www.changeip.com
+hostname=YOUR_HOSTNAME
+user=YOUR_CHANGEIP_USERNAME
+password=YOUR_CHANGEIP_PASSWORD
+
+# ============================================
+# 【新增】WebDAV 高性能文件传输配置
+# ============================================
+[webdav]
+# WebDAV 用户名（用于 FileZilla 等客户端登录）
+user=webdav
+
+# WebDAV 密码
+# 【重要】使用强密码！生成方法：openssl rand -base64 24
+password=CHANGE_THIS_STRONG_WEBDAV_PASSWORD_MIN_16_CHARS
+
+# 说明：
+# - WebDAV 通过 HTTPS (443端口) 访问，无需额外开放端口
+# - 数据目录与 SFTP 共享 (ftp.path)
+# - 预期下载速度：30-35 MB/s（比 SFTP 快 50%）
+# - 支持断点续传、大文件上传
+#
+# FileZilla 配置示例：
+#   协议: WebDAV (HTTPS)
+#   主机: your-domain.com
+#   端口: 443
+#   路径: /webdav
+#   用户名: webdav
+#   密码: (此处配置的密码)

@@ -1,0 +1,92 @@
+{
+	"log": {
+		"access": "@@V2RAY_LOG_DIR@@/access.log",
+		"error": "@@V2RAY_LOG_DIR@@/error.log",
+		"loglevel": "warning"
+	},
+	"inbounds": [
+		{
+			"listen": "127.0.0.1",
+			"port": @@V2RAY_PORT@@,
+			"protocol": "vmess",
+			"settings": {
+				"clients": [
+					{
+						"id": "@@V2RAY_UUID@@",
+						"level": 1,
+						"alterId": 0
+					}
+				]
+			},
+			"streamSettings": {
+				"network": "ws",
+				"security": "none",
+				"wsSettings": {
+					"path": "/@@V2RAY_URL@@"
+				}
+			},
+			"sniffing": {
+				"enabled": true,
+				"destOverride": [
+					"http",
+					"tls"
+				]
+			}
+		}
+	],
+	"outbounds": [
+		{
+			"protocol": "freedom",
+			"settings": {
+				"domainStrategy": "UseIP"
+			},
+			"tag": "direct"
+		},
+		{
+			"protocol": "blackhole",
+			"settings": {},
+			"tag": "blocked"
+		}
+	],
+	"dns": {
+		"servers": [
+			"https+local://dns.google/dns-query",
+			"8.8.8.8",
+			"1.1.1.1",
+			"localhost"
+		]
+	},
+	"routing": {
+		"domainStrategy": "IPOnDemand",
+		"rules": [
+			{
+				"type": "field",
+				"ip": [
+					"geoip:private"
+				],
+				"outboundTag": "blocked"
+			},
+			{
+				"type": "field",
+				"domain": [
+				    "geosite:category-ads-all"
+				],
+				"outboundTag": "blocked"
+			},
+			{
+				"type": "field",
+				"protocol": [
+					"bittorrent"
+				],
+				"outboundTag": "blocked"
+			}
+		]
+	},
+	"transport": {
+		"kcpSettings": {
+			"uplinkCapacity": 100,
+			"downlinkCapacity": 100,
+			"congestion": true
+		}
+	}
+}

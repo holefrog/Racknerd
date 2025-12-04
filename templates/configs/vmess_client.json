@@ -1,0 +1,17 @@
+{
+  "v": "2",
+  "ps": "magicduck",
+  "add": "@@DOMAIN@@",
+  "port": 443,
+  "id": "@@V2RAY_UUID@@",
+  "aid": 0,
+  "scy": "auto",
+  "net": "ws",
+  "type": "none",
+  "host": "@@DOMAIN@@",
+  "path": "/@@V2RAY_URL@@",
+  "tls": "tls",
+  "sni": "@@DOMAIN@@",
+  "alpn": "http/1.1",
+  "fp": "chrome"
+}

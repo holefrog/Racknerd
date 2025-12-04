@@ -1,0 +1,14 @@
+[Definition]
+# V2Ray/Xray 失败连接尝试的通用匹配模式
+# 匹配 VLESS/VMess/TLS/WebSocket 相关的握手错误或访问拒绝
+
+# access denied 匹配（例如错误的UUID或协议）
+failregex = ^.*access denied.*remote: <HOST>:\d+.*
+            # TLS 握手错误 (例如错误的SNI或证书问题)
+            ^.*inbound/tls: TLS handshake error.*remote: <HOST>:\d+.*
+            # VLESS/VMess failed to read request header (协议错误/尝试连接非V2Ray客户端)
+            ^.*failed to read request header.*remote: <HOST>:\d+.*
+            
+ignoreregex = 
+# 日期格式需要根据 V2Ray 日志格式调整
+datepattern = %%Y/%%m/%%d %%H:%%M:%%S

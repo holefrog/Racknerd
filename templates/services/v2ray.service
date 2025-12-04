@@ -1,0 +1,28 @@
+[Unit]
+Description=V2Ray Service
+Documentation=https://www.v2fly.org/
+After=network.target nss-lookup.target
+
+[Service]
+# 安全设置：使用 nginx 用户运行
+User=nginx
+Group=nginx
+
+# 允许绑定端口和网络管理能力
+CapabilityBoundingSet=CAP_NET_BIND_SERVICE CAP_NET_ADMIN
+AmbientCapabilities=CAP_NET_BIND_SERVICE CAP_NET_ADMIN
+NoNewPrivileges=true
+
+# Systemd 沙盒隔离
+ProtectSystem=full
+ProtectHome=true
+PrivateTmp=true
+ProtectKernelTunables=true
+ProtectControlGroups=true
+
+ExecStart=@@V2RAY_PATH@@/v2ray run -config @@V2RAY_PATH@@/@@V2RAY_CONFIG@@
+Restart=on-failure
+RestartSec=5s
+
+[Install]
+WantedBy=multi-user.target

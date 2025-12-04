@@ -1,0 +1,30 @@
+[Unit]
+Description=Aria2 Download Service
+After=network.target
+
+[Service]
+Type=simple
+User=nginx
+Group=nginx
+
+# Systemd 沙盒隔离与网络能力
+AmbientCapabilities=CAP_NET_BIND_SERVICE CAP_NET_ADMIN
+CapabilityBoundingSet=CAP_NET_BIND_SERVICE CAP_NET_ADMIN
+NoNewPrivileges=true
+ProtectKernelTunables=true
+ProtectControlGroups=true
+
+# 文件系统只读保护
+ProtectSystem=full
+ProtectHome=true
+PrivateTmp=true
+
+# 显式允许写入的路径
+ReadWritePaths=@@ARIA2_PATH@@
+ReadWritePaths=@@FTP_PATH@@
+
+ExecStart=/usr/bin/aria2c --conf-path=@@ARIA2_PATH@@/@@ARIA2_CONFIG@@
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
